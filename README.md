@@ -112,6 +112,7 @@ With your virtual environment activated, launch the game by executing the main e
 ## Authors
 
 - Solitaire AI: KNIGHTFALL
+- InternalProcessor.ipynb: [@Krafer](https://www.youtube.com/@Krafer)
 
 ## License
 
