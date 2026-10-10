@@ -124,12 +124,10 @@ python3 benchmark.py --seed 10002
 
 ## Features
 
-- **Royal Felt Tabletop Aesthetic**: Deep emerald green felt theme with antiqued gold borders, clean card faces, and crisp vector typography.
 - **Intelligent Heuristic Solver**: Analyzes foundation targets, face-down card reveals, empty column utility, and stock cycling to select optimal moves.
 - **Real-Time AI Hints**: Visual glowing highlights pointing from source cards to optimal destination piles.
 - **Automated Bot Play**: Watch the AI execute real-time animated moves with configurable playback speed (`1x`, `2x`, `4x`).
-- **Smooth Physics & Animations**: Cubic ease-out transitions for card dealing and user moves.
-- **Realistic Victory Cascade**: Classic win cascade with floor restitution, horizontal impact friction, and natural settling across the table floor.
+- **Smooth Animations & Graphics**: Elegant emerald-and-gold visuals with fluid card dealing.
 - **Full History & Undo**: Unlimited move backtracking with undo history.
 - **Stalemate Detection**: Automatically identifies no-win cycle deadlocks.
 - **High-Speed Headless Benchmark Engine**: Unified solver runs hundreds of games per second to analyze win rates, score distributions, and turns-to-win.
