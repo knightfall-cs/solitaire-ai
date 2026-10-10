@@ -72,8 +72,6 @@ uv pip install -r requirements.txt
 
 ## Usage
 
-### Launching the Application
-
 With your virtual environment activated, launch the game by executing the main entry point:
 
 - **Linux / macOS**:
@@ -88,42 +86,20 @@ With your virtual environment activated, launch the game by executing the main e
   python main_gui.py
   ```
 
-### User Interface & Controls
-
-| Control | Description |
-|---|---|
-| **Left Click + Drag** | Pick up and move any face-up card or card stack between Tableau columns and Foundation piles. |
-| **Double Click** | Automatically send an eligible card to its respective Foundation pile. |
-| **Click Stock Pile** | Draw 3 cards to the Waste pile, or recycle the Waste pile when the Stock is depleted. |
-| **New Game** | Reset the board state and deal a fresh 52-card Klondike deal. |
-| **Undo** | Revert the most recent move using the engine's state history stack. |
-| **AI Hint** | Evaluate legal moves and highlight the optimal move (source card in orange, destination in cyan). |
-| **AI Auto-Play** | Toggle the automated bot to play moves in real time with animated transitions. Click **Pause AI** to halt. |
-| **Speed Toggle** | Cycle AI playback animation speed between `1x`, `2x`, and `4x`. |
-
-### Running the Simulation Notebook
-
-To inspect the solver algorithms or run the 5,000-game Monte Carlo simulation benchmark:
-
-```bash
-jupyter notebook InternalProcessor.ipynb
-```
-
 ## Features
 
-- **Interactive Drag-and-Drop Gameplay**: Full support for single cards and multi-card stacks with smooth cubic ease-out movement animations.
+- Interactive Klondike Solitaire gameplay with smooth drag-and-drop animations.
 
-- **Heuristic AI Solver**: Intelligent Klondike solver that prioritizes foundation moves, unblocks hidden tableau stacks, and splits card sequences to dig out critical cards.
+- Integrated heuristic AI solver with move recommendations and smart hints.
 
-- **Automated Bot Mode**: Watch the AI play live in real-time with smooth card sliding animations.
+- Automated AI bot mode with real-time animated card playback.
 
-- **Smart Hint System**: Visual highlight indicator that recommends the best legal move on the table.
+- Automatic stalemate detection and victory recognition.
 
-- **Stalemate Detection**: Automatically identifies when no valid moves remain across the board and deck, preventing infinite loops and gracefully displaying a `NO MORE MOVES!` notification.
+- Full move history tracking with Undo functionality.
 
-- **Royal Casino Aesthetic**: Deep emerald felt background, gold metallic button borders, ivory parchment card faces, and crisp vector suit symbols (♠ ♥ ♣ ♦).
+- Includes Monte Carlo simulation notebook for analyzing solver win rates.
 
-- **Monte Carlo Benchmarking**: Includes `InternalProcessor.ipynb` for running 5,000-game simulations to analyze solver win rates and score distributions.
 
 ## Notes
 
