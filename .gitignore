@@ -33,6 +33,10 @@ MANIFEST
 # Jupyter Notebook
 .ipynb_checkpoints
 
+# Benchmark simulation results
+results*.json
+
+
 # Environments
 .env
 .venv
