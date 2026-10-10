@@ -4,38 +4,110 @@ Solitaire AI is an animated desktop Klondike Solitaire game built with Python an
 
 ## Table of Contents
 
+- [Installation](#installation)
 - [Usage](#usage)
 - [Features](#features)
-- [Installation](#installation)
 - [Notes](#notes)
 - [Authors](#authors)
 - [License](#license)
 - [Acknowledgments](#acknowledgments)
 
+## Installation
+
+### Prerequisites
+
+Ensure the following tools are installed on your system:
+- **Python**: Version 3.10 or higher ([Download Python](https://www.python.org/downloads/))
+- **Git**: For source version control ([Download Git](https://git-scm.com/))
+- **Pip**: Standard Python package installer
+
+### Step 1: Clone the Repository
+
+Clone the project repository to your local machine and navigate into the project directory:
+
+```bash
+git clone https://github.com/knightfall-cs/solitaire-ai.git
+cd solitaire-ai
+```
+
+### Step 2: Configure a Virtual Environment
+
+It is recommended to use an isolated Python virtual environment to manage project dependencies:
+
+- **On Linux / macOS**:
+
+  ```bash
+  python3 -m venv .venv
+  source .venv/bin/activate
+  ```
+
+- **On Windows (Command Prompt)**:
+
+  ```cmd
+  python -m venv .venv
+  .venv\Scripts\activate
+  ```
+
+- **On Windows (PowerShell)**:
+
+  ```powershell
+  python -m venv .venv
+  .venv\Scripts\Activate.ps1
+  ```
+
+### Step 3: Install Dependencies
+
+Upgrade `pip` to the latest version and install the required packages:
+
+```bash
+python -m pip install --upgrade pip
+pip install -r requirements.txt
+```
+
+*(Alternative)* If you use [uv](https://github.com/astral-sh/uv), dependencies can be installed via:
+
+```bash
+uv pip install -r requirements.txt
+```
+
 ## Usage
 
-To play the game and use the AI solver, follow these steps:
+### Launching the Application
 
-1. Clone or download this repository.
+With your virtual environment activated, launch the game by executing the main entry point:
 
-2. Open a terminal in the repository directory.
+- **Linux / macOS**:
 
-3. Run the following command:
+  ```bash
+  python3 main_gui.py
+  ```
 
-   ```bash
-   python3 main_gui.py
-   ```
+- **Windows**:
 
-### In-Game Controls
+  ```cmd
+  python main_gui.py
+  ```
 
-- **Move Cards**: Click and drag any face-up card or card stack with the left mouse button.
-- **Auto-Move to Foundation**: Double-click any eligible card to automatically send it to its suit's Foundation pile.
-- **Draw Cards**: Click the face-down Stock pile to draw 3 cards (or recycle the Waste pile back to Stock).
-- **New Game**: Click the `New Game` button on the top toolbar to deal a fresh hand.
-- **Undo Move**: Click the `Undo` button to revert the previous card move.
-- **Get AI Hint**: Click `AI Hint` to highlight the best candidate move (source card glows in orange, destination in cyan).
-- **AI Auto-Play Bot**: Click `AI Auto-Play` to let the solver automatically play out the game turn-by-turn with animated card movements. Click `Pause AI` to stop at any time.
-- **Adjust Bot Speed**: Click `Speed: 1x` to toggle playback speed between `1x`, `2x`, and `4x`.
+### User Interface & Controls
+
+| Control | Description |
+|---|---|
+| **Left Click + Drag** | Pick up and move any face-up card or card stack between Tableau columns and Foundation piles. |
+| **Double Click** | Automatically send an eligible card to its respective Foundation pile. |
+| **Click Stock Pile** | Draw 3 cards to the Waste pile, or recycle the Waste pile when the Stock is depleted. |
+| **New Game** | Reset the board state and deal a fresh 52-card Klondike deal. |
+| **Undo** | Revert the most recent move using the engine's state history stack. |
+| **AI Hint** | Evaluate legal moves and highlight the optimal move (source card in orange, destination in cyan). |
+| **AI Auto-Play** | Toggle the automated bot to play moves in real time with animated transitions. Click **Pause AI** to halt. |
+| **Speed Toggle** | Cycle AI playback animation speed between `1x`, `2x`, and `4x`. |
+
+### Running the Simulation Notebook
+
+To inspect the solver algorithms or run the 5,000-game Monte Carlo simulation benchmark:
+
+```bash
+jupyter notebook InternalProcessor.ipynb
+```
 
 ## Features
 
@@ -53,34 +125,13 @@ To play the game and use the AI solver, follow these steps:
 
 - **Monte Carlo Benchmarking**: Includes `InternalProcessor.ipynb` for running 5,000-game simulations to analyze solver win rates and score distributions.
 
-## Installation
-
-Before playing Solitaire AI, ensure you have [Python 3](https://www.python.org/downloads/) (Python 3.10 or higher) installed on your system.
-
-To install the necessary dependencies, run the following command in your terminal:
-
-```bash
-python -m pip install -r requirements.txt
-```
-
-OR (only in linux):
-
-```bash
-sudo apt install python3-pygame python3-matplotlib python3-numpy
-```
-This installs Pygame, Matplotlib, and NumPy directly from your Linux distribution package manager.
-
 ## Notes
 
-- The game follows standard Klondike Solitaire rules: 7 tableau columns, 4 suit foundation piles (built Ace through King), and 3-card stock draw.
+- The game adheres to standard Klondike Solitaire rules: 7 tableau columns, 4 suit foundation piles (built Ace through King), and 3-card stock draw.
 
 - Only Kings (or card stacks starting with a King) can be placed onto empty tableau columns.
 
-- If you wish to run the Monte Carlo simulation notebook or test custom AI solver strategies, launch Jupyter Notebook:
-
-  ```bash
-  jupyter notebook InternalProcessor.ipynb
-  ```
+- On Linux systems utilizing Wayland, Pygame uses the SDL2 backend automatically. If you encounter display driver warnings, you may optionally set `export SDL_VIDEODRIVER=x11`.
 
 ## Authors
 
