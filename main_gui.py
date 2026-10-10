@@ -12,9 +12,14 @@ FPS = 60
 
 
 class SolitaireGUIApp:
-    def __init__(self):
+    def __init__(self, seed=None):
         pygame.init()
         pygame.font.init()
+
+        self.initial_seed = seed
+        if seed is not None:
+            import random
+            random.seed(seed)
 
         self.screen = pygame.display.set_mode((WINDOW_WIDTH, WINDOW_HEIGHT), pygame.RESIZABLE)
         pygame.display.set_caption("Solitaire AI - Klondike Animated GUI Game")
@@ -444,5 +449,12 @@ class SolitaireGUIApp:
 
 
 if __name__ == '__main__':
-    app = SolitaireGUIApp()
+    seed_arg = None
+    if '--seed' in sys.argv:
+        try:
+            seed_idx = sys.argv.index('--seed')
+            seed_arg = int(sys.argv[seed_idx + 1])
+        except (IndexError, ValueError):
+            seed_arg = None
+    app = SolitaireGUIApp(seed=seed_arg)
     app.run()

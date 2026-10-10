@@ -121,6 +121,8 @@ class SolitaireEngine:
 
     def save_snapshot(self):
         """Saves current state for Undo capability."""
+        if not getattr(self, 'enable_history', True):
+            return
         snapshot = {
             'tableau': copy.deepcopy(self.tableau),
             'stock': copy.deepcopy(self.stock),
