@@ -1,6 +1,8 @@
 import random
 import copy
 import math
+import time
+import json
 
 class Card:
     """
@@ -413,3 +415,118 @@ class SolitaireEngine:
             return self.move_waste_to_tableau(action[1])
 
         return False
+
+    def simulate_game(self, max_steps=600):
+        """
+        Executes automated AI solver steps until terminal state (win or stalemate).
+        Returns a dict summary of the completed game.
+        """
+        steps = 0
+        while steps < max_steps:
+            if self.is_won() or self.is_stalemate():
+                break
+            moved = self.execute_ai_step()
+            if not moved:
+                break
+            steps += 1
+
+        cards_on_found = sum(len(p) for p in self.foundation.values())
+        return {
+            'won': self.is_won() or cards_on_found == 52,
+            'moves': steps,
+            'score': self.score,
+            'cards_cleared': cards_on_found,
+            'foundations': {suit: len(pile) for suit, pile in self.foundation.items()}
+        }
+
+    @classmethod
+    def run_benchmark(cls, num_games=1000, start_seed=10000, export_path=None):
+        """
+        Executes an isolated Monte Carlo benchmark across num_games.
+        Returns a comprehensive dictionary with summary statistics and winning seeds.
+        """
+        engine = cls()
+        engine.enable_history = False
+
+        start_time = time.time()
+        wins = 0
+        stalemates = 0
+        scores = []
+        moves_per_win = []
+        foundation_counts = []
+        winning_games = []
+
+        brackets = {
+            '0-10 cards': 0,
+            '11-20 cards': 0,
+            '21-30 cards': 0,
+            '31-40 cards': 0,
+            '41-51 cards': 0,
+            '52 cards (WIN)': 0
+        }
+
+        for i in range(num_games):
+            seed = start_seed + i
+            random.seed(seed)
+            engine.new_game()
+            engine.enable_history = False
+
+            res = engine.simulate_game()
+            scores.append(res['score'])
+            cards_cleared = res['cards_cleared']
+            foundation_counts.append(cards_cleared)
+
+            if res['won']:
+                wins += 1
+                moves_per_win.append(res['moves'])
+                brackets['52 cards (WIN)'] += 1
+                winning_games.append({
+                    'seed': seed,
+                    'moves': res['moves'],
+                    'score': res['score'],
+                    'foundations': res['foundations']
+                })
+            else:
+                stalemates += 1
+                if cards_cleared <= 10:
+                    brackets['0-10 cards'] += 1
+                elif cards_cleared <= 20:
+                    brackets['11-20 cards'] += 1
+                elif cards_cleared <= 30:
+                    brackets['21-30 cards'] += 1
+                elif cards_cleared <= 40:
+                    brackets['31-40 cards'] += 1
+                else:
+                    brackets['41-51 cards'] += 1
+
+        elapsed = time.time() - start_time
+        win_rate = (wins / num_games) * 100
+        avg_score = sum(scores) / len(scores) if scores else 0
+        avg_moves_win = sum(moves_per_win) / len(moves_per_win) if moves_per_win else 0
+        avg_found_cards = sum(foundation_counts) / len(foundation_counts) if foundation_counts else 0
+
+        data = {
+            'metadata': {
+                'total_games': num_games,
+                'start_seed': start_seed,
+                'execution_time_seconds': round(elapsed, 3),
+                'games_per_second': round(num_games / elapsed, 1) if elapsed > 0 else 0
+            },
+            'summary': {
+                'wins': wins,
+                'stalemates': stalemates,
+                'win_rate_percent': round(win_rate, 2),
+                'average_score': round(avg_score, 1),
+                'average_turns_per_win': round(avg_moves_win, 1),
+                'average_foundation_cards': round(avg_found_cards, 1),
+                'distribution': brackets
+            },
+            'winning_seeds': winning_games
+        }
+
+        if export_path:
+            with open(export_path, 'w', encoding='utf-8') as f:
+                json.dump(data, f, indent=2)
+
+        return data
+
