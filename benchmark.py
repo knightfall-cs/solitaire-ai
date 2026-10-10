@@ -85,21 +85,17 @@ def main():
   python3 benchmark.py --games 1000
   python3 benchmark.py --games 5000 --export results.json
   python3 benchmark.py --seed 10002
-  python3 benchmark.py --games 500 --gui
 """
     )
     parser.add_argument('--games', type=int, default=1000, help="Number of games to benchmark (default: 1000)")
     parser.add_argument('--start-seed', type=int, default=10000, help="Starting seed offset (default: 10000)")
     parser.add_argument('--export', type=str, default=None, help="Path to export JSON results (e.g. results.json)")
     parser.add_argument('--seed', type=int, default=None, help="Test a single specific seed directly")
-    parser.add_argument('--gui', action='store_true', help="Launch GUI with the first winning seed found")
 
     args = parser.parse_args()
 
     if args.seed is not None:
         test_single_seed(args.seed)
-        if args.gui:
-            os.system(f"python3 {os.path.join(SCRIPT_DIR, 'main_gui.py')} --seed {args.seed}")
         return
 
     print("=" * 65)
@@ -121,12 +117,6 @@ def main():
 
     if args.export:
         print(f"[OK] Results exported successfully to: {os.path.abspath(args.export)}")
-
-    winning_seeds = data.get('winning_seeds', [])
-    if args.gui and winning_seeds:
-        first_win = winning_seeds[0]['seed']
-        print(f"\nLaunching GUI with winning seed {first_win}...")
-        os.system(f"python3 {os.path.join(SCRIPT_DIR, 'main_gui.py')} --seed {first_win}")
 
 
 if __name__ == '__main__':

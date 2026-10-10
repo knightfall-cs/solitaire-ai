@@ -38,29 +38,63 @@ class ActiveCardAnimation:
 
 
 class VictoryCascadeParticle:
-    def __init__(self, card_surface, start_pos):
+    def __init__(self, card_surface, start_pos, delay=0.0, screen_w=1280, screen_h=900, card_w=110, card_h=154):
         self.card_surface = card_surface
-        self.x, self.y = start_pos
-        self.vx = random.uniform(-8, 8)
-        self.vy = random.uniform(-12, -4)
-        self.gravity = 0.6
-        self.bounce = 0.75
-        self.screen_h = 900
+        self.x = float(start_pos[0])
+        self.y = float(start_pos[1])
+        self.vx = random.uniform(-6.5, 6.5)
+        self.vy = random.uniform(-11.0, -4.0)
+        self.gravity = 0.55
+        self.bounce = 0.65       # Energy restitution per vertical bounce
+        self.friction = 0.70     # Ground friction dampening horizontal momentum on floor contact
+        self.screen_w = screen_w
+        self.screen_h = screen_h
+        self.card_w = card_w
+        self.card_h = card_h
+        self.bounces = 0
+        self.max_bounces = random.randint(3, 4)  # Realistically settle after 3 to 4 jumps
+        self.at_rest = False
+        self.delay = delay
+        self.start_time = time.time() + delay
+        self.started = delay <= 0.0
 
     def update(self):
+        if not self.started:
+            if time.time() >= self.start_time:
+                self.started = True
+            else:
+                return
+
+        if self.at_rest:
+            return
+
         self.x += self.vx
         self.y += self.vy
         self.vy += self.gravity
 
+        floor_y = self.screen_h - self.card_h
+
         # Bounce on floor
-        if self.y > self.screen_h - 154:
-            self.y = self.screen_h - 154
+        if self.y >= floor_y:
+            self.y = floor_y
+            self.bounces += 1
             self.vy = -self.vy * self.bounce
-            if abs(self.vy) < 1:
-                self.vy = 0
+            self.vx *= self.friction
+
+            # Stop moving realistically after a few jumps or when kinetic energy is depleted
+            if self.bounces >= self.max_bounces or (abs(self.vy) < 1.8 and self.bounces >= 2):
+                self.y = floor_y
+                self.vy = 0.0
+                self.vx = 0.0
+                self.at_rest = True
 
     def draw(self, surface):
-        surface.blit(self.card_surface, (self.x, self.y))
+        if not self.started:
+            return
+        # If card has traveled far outside visible window view, skip drawing
+        if self.x < -self.card_w - 50 or self.x > self.screen_w + 50:
+            return
+        surface.blit(self.card_surface, (round(self.x), round(self.y)))
 
 
 class AnimationManager:
@@ -93,5 +127,6 @@ class AnimationManager:
 
     def start_victory_cascade(self, card_surfaces, positions):
         self.victory_particles = []
-        for surf, pos in zip(card_surfaces, positions):
-            self.victory_particles.append(VictoryCascadeParticle(surf, pos))
+        for i, (surf, pos) in enumerate(zip(card_surfaces, positions)):
+            delay = i * 0.05
+            self.victory_particles.append(VictoryCascadeParticle(surf, pos, delay=delay))

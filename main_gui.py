@@ -436,8 +436,12 @@ class SolitaireGUIApp:
         if self.engine.is_won():
             if not self.victory_celebrated:
                 self.victory_celebrated = True
-                card_surfs = [self.renderer.get_card_surface(c) for c in self.engine.foundation[1]]
-                positions = [self.foundation_pos[1] for _ in range(len(card_surfs))]
+                card_surfs = []
+                positions = []
+                for s in range(4):
+                    for c in self.engine.foundation.get(s, []):
+                        card_surfs.append(self.renderer.get_card_surface(c))
+                        positions.append(self.foundation_pos[s])
                 self.animator.start_victory_cascade(card_surfs, positions)
 
             win_txt = self.font_win.render("CONGRATULATIONS! YOU WON!", True, GOLD_HIGHLIGHT)

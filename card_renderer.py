@@ -48,6 +48,7 @@ class CardRenderer:
         self.font_suit_small = pygame.font.SysFont(ORIGINAL_CARD_FONT, int(self.height * 0.18), bold=True)
         self.font_suit_center = pygame.font.SysFont(ORIGINAL_CARD_FONT, int(self.height * 0.48), bold=True)
         self.font_slot = pygame.font.SysFont(ORIGINAL_CARD_FONT, int(self.height * 0.35), bold=True)
+        self.font_slot_text = pygame.font.SysFont(ORIGINAL_CARD_FONT, int(self.height * 0.18), bold=True)
 
         # Cache rendered card surfaces to optimize performance
         self._cache = {}
@@ -135,7 +136,8 @@ class CardRenderer:
         pygame.draw.rect(surf, SLOT_OUTLINE, rect, width=2, border_radius=self.border_radius)
 
         if watermark_symbol:
-            txt = self.font_slot.render(watermark_symbol, True, (40, 120, 75))
+            font = self.font_slot_text if len(watermark_symbol) > 1 else self.font_slot
+            txt = font.render(watermark_symbol, True, (40, 120, 75))
             txt_rect = txt.get_rect(center=(self.width // 2, self.height // 2))
             surf.blit(txt, txt_rect)
 
