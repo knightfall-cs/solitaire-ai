@@ -1,103 +1,99 @@
-# Solitaire AI 🃏🤖
+# Solitaire AI
 
-[![Python](https://img.shields.io/badge/Python-3.10%2B-blue.svg)](https://www.python.org/)
-[![Pygame](https://img.shields.io/badge/Pygame-2.5%2B-green.svg)](https://www.pygame.org/)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+Solitaire AI is an animated desktop Klondike Solitaire game built with Python and Pygame, featuring an integrated heuristic AI solver, real-time move hints, automated bot play, and Monte Carlo win-rate simulation benchmarks.
 
-A modern, animated desktop **Klondike Solitaire** game built with Python and Pygame, featuring an integrated **heuristic AI solver**, real-time move hints, automated bot play, and a Monte Carlo simulation benchmark suite.
+## Table of Contents
 
----
+- [Usage](#usage)
+- [Features](#features)
+- [Installation](#installation)
+- [Notes](#notes)
+- [Authors](#authors)
+- [License](#license)
+- [Acknowledgments](#acknowledgments)
 
-## ✨ Features
+## Usage
 
-- 🎮 **Interactive Gameplay**:
-  - Smooth card and multi-card stack drag-and-drop.
-  - Double-click to automatically send eligible cards to Foundation piles.
-  - Stock deck draw (3-card draw) with recycling.
-  - Full move history and Undo support.
-- 🤖 **AI Auto-Play Bot**:
-  - Automatically analyzes board states and executes optimal moves turn-by-turn.
-  - Adjustable speed multiplier (1x, 2x, 4x) for playback.
-  - Visual card sliding animations while the bot plays.
-- 💡 **Smart Hint System**:
-  - Calculates the highest-priority legal move according to solver heuristics.
-  - Highlights source cards in glowing orange and target slots in cyan.
-- 🛑 **Stalemate Detection**:
-  - Automatically identifies when no valid moves remain across the board and deck, gracefully pausing the AI with a `NO MORE MOVES!` notification.
-- 🎨 **Royal Casino Design**:
-  - Deep emerald felt table with gold metallic borders and dark velvet toolbar.
-  - Crisp, high-contrast playing cards with standard suit symbols (♠ ♥ ♣ ♦).
-  - Cubic ease-out sliding animations and victory celebration cascade.
-- 📊 **Monte Carlo Benchmarks**:
-  - Includes `InternalProcessor.ipynb` for simulating thousands of automated games and analyzing win rates and score distributions.
+To play the game and use the AI solver, follow these steps:
 
----
+1. Clone or download this repository.
 
-## 📁 Repository Structure
+2. Open a terminal in the repository directory.
 
-```text
-solitaire-ai/
-├── main_gui.py              # Main Pygame desktop GUI application
-├── solitaire_engine.py      # Core Klondike game engine, rules & AI solver logic
-├── card_renderer.py         # Vector-style card graphics, suits & UI slots renderer
-├── animator.py              # Eased cubic interpolation animation controller
-├── InternalProcessor.ipynb  # Original research notebook & Monte Carlo test suite
-├── requirements.txt         # Project dependencies
-├── .gitignore               # Git ignore patterns for Python & environments
-├── LICENSE                  # MIT Open Source License
-└── README.md                # Project documentation
-```
+3. Run the following command:
 
----
+   ```bash
+   python3 main_gui.py
+   ```
 
-## 🚀 Quick Start
+### In-Game Controls
 
-### 1. Prerequisites
-Ensure you have **Python 3.10+** installed on your system.
+- **Move Cards**: Click and drag any face-up card or card stack with the left mouse button.
+- **Auto-Move to Foundation**: Double-click any eligible card to automatically send it to its suit's Foundation pile.
+- **Draw Cards**: Click the face-down Stock pile to draw 3 cards (or recycle the Waste pile back to Stock).
+- **New Game**: Click the `New Game` button on the top toolbar to deal a fresh hand.
+- **Undo Move**: Click the `Undo` button to revert the previous card move.
+- **Get AI Hint**: Click `AI Hint` to highlight the best candidate move (source card glows in orange, destination in cyan).
+- **AI Auto-Play Bot**: Click `AI Auto-Play` to let the solver automatically play out the game turn-by-turn with animated card movements. Click `Pause AI` to stop at any time.
+- **Adjust Bot Speed**: Click `Speed: 1x` to toggle playback speed between `1x`, `2x`, and `4x`.
 
-### 2. Installation
-Clone this repository and install the required dependencies:
+## Features
 
-```bash
-git clone https://github.com/<your-username>/solitaire-ai.git
-cd solitaire-ai
-pip install -r requirements.txt
-```
+- **Interactive Drag-and-Drop Gameplay**: Full support for single cards and multi-card stacks with smooth cubic ease-out movement animations.
 
-### 3. Launch the Game
-Run the main GUI application:
+- **Heuristic AI Solver**: Intelligent Klondike solver that prioritizes foundation moves, unblocks hidden tableau stacks, and splits card sequences to dig out critical cards.
+
+- **Automated Bot Mode**: Watch the AI play live in real-time with smooth card sliding animations.
+
+- **Smart Hint System**: Visual highlight indicator that recommends the best legal move on the table.
+
+- **Stalemate Detection**: Automatically identifies when no valid moves remain across the board and deck, preventing infinite loops and gracefully displaying a `NO MORE MOVES!` notification.
+
+- **Royal Casino Aesthetic**: Deep emerald felt background, gold metallic button borders, ivory parchment card faces, and crisp vector suit symbols (♠ ♥ ♣ ♦).
+
+- **Monte Carlo Benchmarking**: Includes `InternalProcessor.ipynb` for running 5,000-game simulations to analyze solver win rates and score distributions.
+
+## Installation
+
+Before playing Solitaire AI, ensure you have [Python 3](https://www.python.org/downloads/) (Python 3.10 or higher) installed on your system.
+
+To install the necessary dependencies, run the following command in your terminal:
 
 ```bash
-python3 main_gui.py
+python -m pip install -r requirements.txt
 ```
 
+OR (only in linux):
+
+```bash
+sudo apt install python3-pygame python3-matplotlib python3-numpy
+```
+This installs Pygame, Matplotlib, and NumPy directly from your Linux distribution package manager.
+
+## Notes
+
+- The game follows standard Klondike Solitaire rules: 7 tableau columns, 4 suit foundation piles (built Ace through King), and 3-card stock draw.
+
+- Only Kings (or card stacks starting with a King) can be placed onto empty tableau columns.
+
+- If you wish to run the Monte Carlo simulation notebook or test custom AI solver strategies, launch Jupyter Notebook:
+
+  ```bash
+  jupyter notebook InternalProcessor.ipynb
+  ```
+
+## Authors
+
+- Solitaire AI: KNIGHTFALL
+
+## License
+
+This [Solitaire AI](https://github.com/knightfall-cs/solitaire-ai.git) is licensed under the MIT License. See the [LICENSE](https://github.com/knightfall-cs/solitaire-ai/blob/main/LICENSE) file for details.
+
+## Acknowledgments
+
+The development of [Solitaire AI](https://github.com/knightfall-cs/solitaire-ai.git) was built upon the core Klondike engine and Monte Carlo solver logic originally developed in `InternalProcessor.ipynb`, expanded with Pygame vector rendering and smooth animation controllers.
+
 ---
 
-## 🕹️ Controls
-
-| Action | Control |
-|---|---|
-| **Move Card / Stack** | Click and drag with Left Mouse Button |
-| **Quick Foundation Move** | Double-click eligible card |
-| **Draw Stock Cards** | Click face-down stock pile |
-| **New Game** | Click **New Game** button in toolbar |
-| **Undo Move** | Click **Undo** button in toolbar |
-| **Get Move Hint** | Click **AI Hint** button |
-| **Toggle AI Bot** | Click **AI Auto-Play** / **Pause AI** |
-| **Change Bot Speed** | Click **Speed: 1x** button to toggle 1x / 2x / 4x |
-
----
-
-## 🧠 AI Solver Architecture
-
-The solver uses a tiered heuristic priority system:
-1. **Foundation First**: Moves Aces and consecutive suit cards to Foundations to free columns and increase board clearance.
-2. **Hidden Card Unlocking**: Prioritizes tableau moves that unblock columns with the highest number of facedown cards.
-3. **Mid-Deck & Endgame Reorganization**: Identifies opportunities to split tableau stacks to reveal cards needed by foundations.
-4. **Stock Cycling & Stalemate Prevention**: Cycles through the waste pile and terminates automatically if full passes yield no board progress.
-
----
-
-## 📜 License
-
-This project is licensed under the [MIT License](LICENSE).
+Author: KNIGHTFALL
