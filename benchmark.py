@@ -94,6 +94,9 @@ def main():
 
     args = parser.parse_args()
 
+    if args.games <= 0:
+        parser.error("--games must be a positive integer greater than 0")
+
     if args.seed is not None:
         test_single_seed(args.seed)
         return

@@ -121,6 +121,9 @@ class SolitaireEngine:
             if col and col[-1].face_up:
                 self.rev.append(col[-1].to_legacy_list())
 
+        # Cycle detection and visited states set
+        self.visited_states = set()
+
     def save_snapshot(self):
         """Saves current state for Undo capability."""
         if not getattr(self, 'enable_history', True):
@@ -136,7 +139,8 @@ class SolitaireEngine:
             'deck_loc': self.deck_loc,
             'last_shift': self.last_shift,
             'stock_draws_without_card_move': self.stock_draws_without_card_move,
-            'board_range_val': self.board_range_val
+            'board_range_val': self.board_range_val,
+            'visited_states': self.visited_states.copy()
         }
         self.history.append(snapshot)
         if len(self.history) > 100:
@@ -157,6 +161,7 @@ class SolitaireEngine:
         self.last_shift = snap['last_shift']
         self.stock_draws_without_card_move = snap.get('stock_draws_without_card_move', 0)
         self.board_range_val = snap['board_range_val']
+        self.visited_states = snap.get('visited_states', set()).copy()
         return True
 
     def can_move_to_tableau(self, card, target_col_idx):
@@ -217,16 +222,25 @@ class SolitaireEngine:
 
         self.save_snapshot()
         self.stock_draws_without_card_move = 0
+        pre_sig = self.get_state_signature()
         self.tableau[src_col] = self.tableau[src_col][:card_idx]
         self.tableau[dest_col].extend(moving_cards)
 
         # Reveal new top card of source column if face down
+        revealed_new = False
         if self.tableau[src_col] and not self.tableau[src_col][-1].face_up:
             self.tableau[src_col][-1].face_up = True
+            revealed_new = True
             self.score += 20
             c_leg = self.tableau[src_col][-1].to_legacy_list()
             if c_leg not in self.rev:
                 self.rev.append(c_leg)
+
+        if revealed_new:
+            self.visited_states.clear()
+        else:
+            self.visited_states.add(pre_sig)
+            self.visited_states.add(self.get_state_signature())
 
         self.move_count += 1
         return True
@@ -252,6 +266,8 @@ class SolitaireEngine:
             if c_leg not in self.rev:
                 self.rev.append(c_leg)
 
+        # Irreversible progress
+        self.visited_states.clear()
         self.move_count += 1
         return True
 
@@ -268,6 +284,8 @@ class SolitaireEngine:
         c = self.waste.pop()
         self.tableau[dest_col].append(c)
         self.score += 20
+        # Irreversible progress in waste reduction
+        self.visited_states.clear()
         self.move_count += 1
         return True
 
@@ -284,6 +302,8 @@ class SolitaireEngine:
         c = self.waste.pop()
         self.foundation[c.suit].append(c)
         self.score += 100
+        # Irreversible progress
+        self.visited_states.clear()
         self.move_count += 1
         return True
 
@@ -296,7 +316,7 @@ class SolitaireEngine:
         max_draws = (len(self.stock) + len(self.waste)) * 2 + 10
         return self.stock_draws_without_card_move >= max_draws
 
-    # --- AI SOLVER LOGIC (Refactored from InternalProcessor.ipynb) ---
+    # --- AI SOLVER LOGIC (Enhanced with sub-stack search & cycle avoidance) ---
 
     def _board_range(self, bR):
         mins = []
@@ -305,8 +325,60 @@ class SolitaireEngine:
             mins.append(pile[-1].rank if pile else 0)
         return min(mins) + bR if mins else bR
 
+    def get_state_signature(self):
+        """Returns a lightweight, hashable signature representing the current visible board state."""
+        f_sig = (len(self.foundation[1]), len(self.foundation[2]), len(self.foundation[3]), len(self.foundation[4]))
+        t_sig = tuple(
+            (
+                sum(1 for c in col if not c.face_up),
+                tuple((c.rank, c.suit) for c in col if c.face_up)
+            )
+            for col in self.tableau
+        )
+        w_top = (self.waste[-1].rank, self.waste[-1].suit) if self.waste else None
+        return (f_sig, t_sig, w_top, len(self.stock))
+
+    def _simulated_signature(self, move):
+        """Returns the signature that would result from applying a candidate move."""
+        origin = move[0]
+        spec = move[1]
+
+        # Foundation moves always increase foundation, so they never produce a past state
+        if spec[0] == 1:
+            return None
+
+        # Reversible tableau-to-tableau move: (0, src_col, card_idx, dest_col)
+        if origin == -1 and spec[0] == 0:
+            src_col, card_idx, dest_col = spec[1], spec[2], spec[3]
+            # If this move reveals a face-down card, it represents irreversible progress
+            if card_idx > 0 and not self.tableau[src_col][card_idx - 1].face_up:
+                return None
+
+            f_sig = (len(self.foundation[1]), len(self.foundation[2]), len(self.foundation[3]), len(self.foundation[4]))
+            w_top = (self.waste[-1].rank, self.waste[-1].suit) if self.waste else None
+
+            cols_sig = []
+            for i, col in enumerate(self.tableau):
+                hidden_count = sum(1 for c in col if not c.face_up)
+                if i == src_col:
+                    face_cards = tuple((c.rank, c.suit) for c in col[:card_idx] if c.face_up)
+                elif i == dest_col:
+                    face_cards = tuple((c.rank, c.suit) for c in col if c.face_up) + tuple(
+                        (c.rank, c.suit) for c in self.tableau[src_col][card_idx:]
+                    )
+                else:
+                    face_cards = tuple((c.rank, c.suit) for c in col if c.face_up)
+                cols_sig.append((hidden_count, face_cards))
+
+            return (f_sig, tuple(cols_sig), w_top, len(self.stock))
+
+        return None
+
     def get_tableau_moves(self):
-        """Calculates valid moves originating from tableau columns."""
+        """
+        Calculates valid moves originating from tableau columns.
+        Includes both whole-stack moves and legal sub-stack moves (when mid_deck_strats is True).
+        """
         moves = []
         for i, col in enumerate(self.tableau):
             if not col:
@@ -319,20 +391,48 @@ class SolitaireEngine:
                 foundation_rank = suit_pile[-1].rank if suit_pile else 0
                 if top_card.rank == foundation_rank + 1 and top_card.rank <= self._board_range(self.board_range_val):
                     hidden_under = sum(1 for c in col if not c.face_up)
-                    moves.append((-1, (1, i, top_card.suit - 1), top_card.rank, hidden_under))
+                    moves.append((-1, (1, i, top_card.suit - 1), top_card.rank, hidden_under, False))
 
-            # Check moving a sequence starting from first face-up card
             first_faceup_idx = next((idx for idx, c in enumerate(col) if c.face_up), None)
-            if first_faceup_idx is not None:
-                first_card = col[first_faceup_idx]
-                for target_idx in range(7):
-                    if target_idx != i and self.can_move_to_tableau(first_card, target_idx):
-                        hidden_under = sum(1 for c in col if not c.face_up)
-                        if hidden_under == 0 and first_card.rank == 13 and not self.tableau[target_idx]:
-                            continue
-                        moves.append((-1, (0, i, target_idx), first_card.rank, hidden_under))
+            if first_faceup_idx is None:
+                continue
 
-        moves.sort(key=lambda m: m[3], reverse=True)
+            hidden_under = sum(1 for c in col if not c.face_up)
+            # If mid_deck_strats is enabled, enumerate all face-up cards as potential suffix starts
+            end_idx = len(col) if self.mid_deck_strats else first_faceup_idx + 1
+
+            for card_idx in range(first_faceup_idx, end_idx):
+                card = col[card_idx]
+                is_sub_stack = (card_idx > first_faceup_idx)
+
+                for target_idx in range(7):
+                    if target_idx == i:
+                        continue
+                    if not self.can_move_to_tableau(card, target_idx):
+                        continue
+
+                    # Prune redundant or pointless moves:
+                    if not is_sub_stack:
+                        # Moving a King from an open base with 0 hidden cards to an empty column is useless
+                        if hidden_under == 0 and card.rank == 13 and not self.tableau[target_idx]:
+                            continue
+                    else:
+                        dest_col = self.tableau[target_idx]
+                        if not dest_col:
+                            # Moving a sub-stack King to an empty column is redundant
+                            continue
+
+                    sub_reveals_foundation = False
+                    if is_sub_stack:
+                        card_below = col[card_idx - 1]
+                        suit_pile = self.foundation[card_below.suit]
+                        f_rank = suit_pile[-1].rank if suit_pile else 0
+                        if card_below.rank == f_rank + 1:
+                            sub_reveals_foundation = True
+
+                    h_score = hidden_under if not is_sub_stack else (10 if sub_reveals_foundation else 0)
+                    moves.append((-1, (0, i, card_idx, target_idx), card.rank, h_score, is_sub_stack))
+
         return moves
 
     def get_waste_moves(self):
@@ -346,12 +446,12 @@ class SolitaireEngine:
         suit_pile = self.foundation[card.suit]
         foundation_rank = suit_pile[-1].rank if suit_pile else 0
         if card.rank == foundation_rank + 1:
-            moves.append((0, (1, 0, card.suit - 1), card.rank))
+            moves.append((0, (1, 0, card.suit - 1), card.rank, 0, False))
 
         # Check waste to tableau
         for target_idx in range(7):
             if self.can_move_to_tableau(card, target_idx):
-                moves.append((0, (0, 0, target_idx), card.rank))
+                moves.append((0, (0, 0, target_idx), card.rank, 0, False))
 
         return moves
 
@@ -360,6 +460,63 @@ class SolitaireEngine:
         t_moves = self.get_tableau_moves()
         w_moves = self.get_waste_moves()
         return t_moves + w_moves
+
+    def evaluate_move(self, move):
+        """
+        Calculates heuristic score for a candidate move.
+        Higher score = higher priority.
+        Penalizes moves that result in repeating an already-visited board state.
+        """
+        origin = move[0]      # -1 = tableau, 0 = waste
+        spec = move[1]
+        rank = move[2]
+        is_sub_stack = move[4]
+
+        # 1. Foundation moves
+        if spec[0] == 1:
+            return 1000 + (13 - rank)
+
+        # 2. Tableau to Tableau moves
+        if origin == -1 and spec[0] == 0:
+            src_col, card_idx, dest_col = spec[1], spec[2], spec[3]
+            if is_sub_stack:
+                score = 50
+                # If card_below can immediately advance foundation (Notebook EndGameStrats)
+                card_below = self.tableau[src_col][card_idx - 1]
+                suit_pile = self.foundation[card_below.suit]
+                f_rank = suit_pile[-1].rank if suit_pile else 0
+                if card_below.rank == f_rank + 1:
+                    score += 450
+                # If card_below can be placed on another tableau column
+                for other_col_idx in range(7):
+                    if other_col_idx != src_col and self.can_move_to_tableau(card_below, other_col_idx):
+                        if self.tableau[other_col_idx]:
+                            score += 150
+                            break
+            else:
+                hidden_under = sum(1 for c in self.tableau[src_col] if not c.face_up)
+                if hidden_under > 0:
+                    score = 500 + hidden_under * 60
+                else:
+                    dest_is_empty = (len(self.tableau[dest_col]) == 0)
+                    score = 80 if dest_is_empty else 120
+
+            # Cycle penalty: check if this reversible move reproduces an already-visited state
+            future_sig = self._simulated_signature(move)
+            if future_sig is not None and future_sig in self.visited_states:
+                score -= 10000
+
+            return score
+
+        # 3. Waste to Tableau moves
+        if origin == 0 and spec[0] == 0:
+            dest_col = spec[2]
+            dest_is_empty = (len(self.tableau[dest_col]) == 0)
+            if dest_is_empty:
+                return 350
+            return 250 + (13 - rank)
+
+        return 0
 
     def get_ai_best_move(self):
         """
@@ -375,25 +532,41 @@ class SolitaireEngine:
                 return ('draw_stock',)
             return None
 
-        # Prioritize foundation moves
-        foundation_moves = [m for m in moves if m[1][0] == 1]
-        if foundation_moves:
-            m = foundation_moves[0]
-            if m[0] == -1:
-                return ('tableau_to_foundation', m[1][1])
+        # Score and rank candidate moves
+        scored_moves = [(self.evaluate_move(m), m) for m in moves]
+
+        # Filter out moves that would cause cycles (score < 0)
+        valid_moves = [sm for sm in scored_moves if sm[0] > 0]
+
+        if not valid_moves:
+            # If all card moves cause cycles or are negative, try drawing stock
+            if (self.stock or self.waste) and not self.is_stalemate():
+                return ('draw_stock',)
+            return None
+
+        # Sort by score descending
+        valid_moves.sort(key=lambda sm: sm[0], reverse=True)
+
+        # Random strategy tie-breaking if enabled
+        if self.random_strats:
+            top_score = valid_moves[0][0]
+            top_candidates = [sm[1] for sm in valid_moves if sm[0] == top_score]
+            chosen = random.choice(top_candidates)
+        else:
+            chosen = valid_moves[0][1]
+
+        origin = chosen[0]
+        spec = chosen[1]
+        if spec[0] == 1:
+            if origin == -1:
+                return ('tableau_to_foundation', spec[1])
             else:
                 return ('waste_to_foundation',)
-
-        # Otherwise pick top tableau or waste move
-        m = moves[0]
-        if m[0] == -1:
-            src_col = m[1][1]
-            dest_col = m[1][2]
-            first_faceup_idx = next(idx for idx, c in enumerate(self.tableau[src_col]) if c.face_up)
-            return ('tableau_to_tableau', src_col, first_faceup_idx, dest_col)
         else:
-            dest_col = m[1][2]
-            return ('waste_to_tableau', dest_col)
+            if origin == -1:
+                return ('tableau_to_tableau', spec[1], spec[2], spec[3])
+            else:
+                return ('waste_to_tableau', spec[2])
 
     def execute_ai_step(self):
         """Executes one step of the AI solver."""
